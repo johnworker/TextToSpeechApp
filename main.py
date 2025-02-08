@@ -3,6 +3,8 @@ import tkinter as tk
 from tkinter import filedialog, messagebox
 from gtts import gTTS
 import pygame
+import speech_recognition as sr
+
 
 audio_folder = "audio"
 os.makedirs(audio_folder, exist_ok=True)
@@ -18,6 +20,20 @@ PRO_LANGUAGES = FREE_LANGUAGES + ["es", "it", "ko", "ru", "pt"]
 
 # 付費版聲音區域
 PRO_VOICES = ["com", "co.uk", "ca", "ie", "co.in", "com.au"]
+
+def recognize_speech():
+    recognizer = sr.Recognizer()
+    with sr.Microphone() as source:
+        messagebox.showinfo("錄音", "請說話...")
+        try:
+            audio = recognizer.listen(source)
+            text = recognizer.recognize_google(audio, language=language_var.get())
+            text_entry.delete("1.0", tk.END)
+            text_entry.insert(tk.END, text)
+        except sr.UnknownValueError:
+            messagebox.showerror("錯誤", "無法辨識語音")
+        except sr.RequestError:
+            messagebox.showerror("錯誤", "語音辨識服務無法使用")
 
 def text_to_speech():
     text = text_entry.get("1.0", tk.END).strip()
@@ -93,5 +109,8 @@ if VERSION == "pro":
 
 tk.Button(root, text="轉換語音", command=text_to_speech).pack()
 tk.Button(root, text="下載音檔", command=save_audio).pack()
+tk.Button(root, text="語音辨識 (錄音)", command=recognize_speech).pack()
+
 
 root.mainloop()
+
