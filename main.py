@@ -113,4 +113,3 @@ tk.Button(root, text="語音辨識 (錄音)", command=recognize_speech).pack()
 
 
 root.mainloop()
-
