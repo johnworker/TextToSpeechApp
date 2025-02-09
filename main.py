@@ -22,6 +22,7 @@ PRO_LANGUAGES = FREE_LANGUAGES + ["es", "it", "ko", "ru", "pt"]
 PRO_VOICES = ["com", "co.uk", "ca", "ie", "co.in", "com.au"]
 
 def recognize_speech():
+    global text_entry, language_var  # 確保函式內能存取全域變數
     recognizer = sr.Recognizer()
     with sr.Microphone() as source:
         messagebox.showinfo("錄音", "請說話...")
@@ -34,6 +35,7 @@ def recognize_speech():
             messagebox.showerror("錯誤", "無法辨識語音")
         except sr.RequestError:
             messagebox.showerror("錯誤", "語音辨識服務無法使用")
+
 
 def text_to_speech():
     text = text_entry.get("1.0", tk.END).strip()
@@ -82,34 +84,36 @@ def save_audio():
         except Exception as e:
             messagebox.showerror("錯誤", f"保存失敗：{str(e)}")
 
-# 建立 GUI 視窗
-root = tk.Tk()
-root.title("文字轉語音小工具")
-root.geometry("400x350")
+        # 建立 GUI 視窗
+        root = tk.Tk()
+        root.title("文字轉語音小工具")
+        root.geometry("400x400")
 
-tk.Label(root, text="請輸入文字:").pack()
-text_entry = tk.Text(root, height=5)
-text_entry.pack()
+        # 建立輸入框
+        tk.Label(root, text="請輸入文字:").pack()
+        text_entry = tk.Text(root, height=5)
+        text_entry.pack()
+        
 
-# 設定語言選單
-tk.Label(root, text="選擇語言:").pack()
-language_var = tk.StringVar(value="zh-TW")
-if VERSION == "pro":
-    language_menu = tk.OptionMenu(root, language_var, *PRO_LANGUAGES)
-else:
-    language_menu = tk.OptionMenu(root, language_var, *FREE_LANGUAGES)
-language_menu.pack()
+        # 設定語言選單
+        tk.Label(root, text="選擇語言:").pack()
+        language_var = tk.StringVar(value="zh-TW")
+        if VERSION == "pro":
+            language_menu = tk.OptionMenu(root, language_var, *PRO_LANGUAGES)
+        else:
+            language_menu = tk.OptionMenu(root, language_var, *FREE_LANGUAGES)
+        language_menu.pack()
+        
+        # 設定語音區域選單 (僅付費版可選)
+        if VERSION == "pro":
+            tk.Label(root, text="選擇語音區域:").pack()
+            voice_var = tk.StringVar(value="com")
+            voice_menu = tk.OptionMenu(root, voice_var, *PRO_VOICES)
+            voice_menu.pack()
+        
+        tk.Button(root, text="轉換語音", command=text_to_speech).pack()
+        tk.Button(root, text="下載音檔", command=save_audio).pack()
+        tk.Button(root, text="語音辨識 (錄音)", command=recognize_speech).pack()
 
-# 設定語音區域選單 (僅付費版可選)
-if VERSION == "pro":
-    tk.Label(root, text="選擇語音區域:").pack()
-    voice_var = tk.StringVar(value="com")
-    voice_menu = tk.OptionMenu(root, voice_var, *PRO_VOICES)
-    voice_menu.pack()
 
-tk.Button(root, text="轉換語音", command=text_to_speech).pack()
-tk.Button(root, text="下載音檔", command=save_audio).pack()
-tk.Button(root, text="語音辨識 (錄音)", command=recognize_speech).pack()
-
-
-root.mainloop()
+        root.mainloop()
