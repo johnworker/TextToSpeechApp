@@ -98,39 +98,11 @@ def save_audio():
         except Exception as e:
             messagebox.showerror("❌ 錯誤", f"保存失敗：{str(e)}")
 
-def save_text():
-    text = text_entry.get("1.0", tk.END).strip()
-    if not text:
-        messagebox.showerror("❌ 錯誤", "請輸入文字！")
-        return
-    
-    save_path = filedialog.asksaveasfilename(defaultextension=".txt", filetypes=[("Text files", "*.txt"), ("All Files", "*.*")])
-    if save_path:
-        try:
-            with open(save_path, "w", encoding="utf-8") as file:
-                file.write(text)
-            messagebox.showinfo("✅ 成功", "文字檔案已保存！")
-        except Exception as e:
-            messagebox.showerror("❌ 錯誤", f"保存失敗：{str(e)}")
-
-def adjust_button_layout(event=None):
-    if root.winfo_width() < 1000:
-        btn_frame.pack_forget()
-        btn_frame.pack(fill="both", expand=True)
-        for btn in btn_frame.winfo_children():
-            btn.pack_configure(side="top", pady=5)
-    else:
-        btn_frame.pack_forget()
-        btn_frame.pack()
-        for btn in btn_frame.winfo_children():
-            btn.pack_configure(side="left", padx=20, pady=10)
-
 # 建立 GUI 視窗
 root = tk.Tk()
 root.title("✨ 文字轉語音 AI 工具 ✨")
-root.geometry("1000x800")
+root.geometry("800x700")
 root.configure(bg="#dbeafe")
-root.bind("<Configure>", adjust_button_layout)
 
 style = ttk.Style()
 style.configure("TFrame", background="#dbeafe", relief="flat")
@@ -141,7 +113,7 @@ style.configure("TCombobox", font=("Arial", 14))
 frame = ttk.Frame(root, padding=30, style="TFrame")
 frame.pack(fill="both", expand=True)
 
-app_title = ttk.Label(frame, text="文字轉語音 AI 工具", font=("Arial", 22, "bold"))
+app_title = ttk.Label(frame, text="🎙️ 文字轉語音 AI 工具", font=("Arial", 28, "bold"))
 app_title.pack(pady=20)
 
 text_label = ttk.Label(frame, text="📝 輸入文字:")
@@ -149,14 +121,27 @@ text_label.pack()
 text_entry = tk.Text(frame, height=10, width=80, font=("Arial", 14), bg="#FFFFFF", fg="#333333", borderwidth=2, relief="solid")
 text_entry.pack(pady=15)
 
+language_label = ttk.Label(frame, text="🌎 選擇語言:")
+language_label.pack()
+language_var = tk.StringVar(value="zh-TW")
+language_menu = ttk.Combobox(frame, textvariable=language_var, values=FREE_LANGUAGES if VERSION == "free" else PRO_LANGUAGES, state="readonly")
+language_menu.pack()
+language_menu.current(0)
+
+if VERSION == "pro":
+    voice_label = ttk.Label(frame, text="🔊 語音區域:")
+    voice_label.pack()
+    voice_var = tk.StringVar(value="com")
+    voice_menu = ttk.Combobox(frame, textvariable=voice_var, values=PRO_VOICES, state="readonly")
+    voice_menu.pack()
+    voice_menu.current(0)
+
 btn_frame = ttk.Frame(frame, padding=20, style="TFrame")
 btn_frame.pack()
 
-ttk.Button(btn_frame, text="🎧 轉換語音", command=text_to_speech).pack()
-ttk.Button(btn_frame, text="💾 下載音檔", command=save_audio).pack()
-ttk.Button(btn_frame, text="📄 下載文字檔", command=save_text).pack()
+ttk.Button(btn_frame, text="🎧 轉換語音", command=text_to_speech).pack(side="left", padx=20, pady=10)
+ttk.Button(btn_frame, text="💾 下載音檔", command=save_audio).pack(side="left", padx=20, pady=10)
 record_button = ttk.Button(btn_frame, text="🎤 開啟錄音", command=toggle_recording)
-record_button.pack()
+record_button.pack(side="left", padx=20, pady=10)
 
-adjust_button_layout()
 root.mainloop()
