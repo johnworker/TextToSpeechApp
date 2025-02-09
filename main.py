@@ -25,6 +25,7 @@ PRO_VOICES = ["com", "co.uk", "ca", "ie", "co.in", "com.au"]
 # 錄音控制變數
 is_recording = False
 recognizer = sr.Recognizer()
+
 def toggle_recording():
     global is_recording
     if is_recording:
@@ -98,6 +99,21 @@ def save_audio():
         except Exception as e:
             messagebox.showerror("❌ 錯誤", f"保存失敗：{str(e)}")
 
+def save_text():
+    text = text_entry.get("1.0", tk.END).strip()
+    if not text:
+        messagebox.showerror("❌ 錯誤", "請輸入文字！")
+        return
+    
+    save_path = filedialog.asksaveasfilename(defaultextension=".txt", filetypes=[("Text files", "*.txt"), ("All Files", "*.*")])
+    if save_path:
+        try:
+            with open(save_path, "w", encoding="utf-8") as file:
+                file.write(text)
+            messagebox.showinfo("✅ 成功", "文字檔案已保存！")
+        except Exception as e:
+            messagebox.showerror("❌ 錯誤", f"保存失敗：{str(e)}")
+
 # 建立 GUI 視窗
 root = tk.Tk()
 root.title("✨ 文字轉語音 AI 工具 ✨")
@@ -128,19 +144,12 @@ language_menu = ttk.Combobox(frame, textvariable=language_var, values=FREE_LANGU
 language_menu.pack()
 language_menu.current(0)
 
-if VERSION == "pro":
-    voice_label = ttk.Label(frame, text="🔊 語音區域:")
-    voice_label.pack()
-    voice_var = tk.StringVar(value="com")
-    voice_menu = ttk.Combobox(frame, textvariable=voice_var, values=PRO_VOICES, state="readonly")
-    voice_menu.pack()
-    voice_menu.current(0)
-
 btn_frame = ttk.Frame(frame, padding=20, style="TFrame")
 btn_frame.pack()
 
 ttk.Button(btn_frame, text="🎧 轉換語音", command=text_to_speech).pack(side="left", padx=20, pady=10)
 ttk.Button(btn_frame, text="💾 下載音檔", command=save_audio).pack(side="left", padx=20, pady=10)
+ttk.Button(btn_frame, text="📄 下載文字檔", command=save_text).pack(side="left", padx=20, pady=10)
 record_button = ttk.Button(btn_frame, text="🎤 開啟錄音", command=toggle_recording)
 record_button.pack(side="left", padx=20, pady=10)
 
