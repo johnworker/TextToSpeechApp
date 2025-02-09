@@ -26,6 +26,14 @@ PRO_VOICES = ["com", "co.uk", "ca", "ie", "co.in", "com.au"]
 is_recording = False
 recognizer = sr.Recognizer()
 
+def adjust_button_layout(event=None):
+    if root.winfo_width() < 1000:
+        for widget in btn_frame.winfo_children():
+            widget.pack_configure(side="top", fill="x", pady=5)
+    else:
+        for widget in btn_frame.winfo_children():
+            widget.pack_configure(side="left", padx=20, pady=10)
+
 def toggle_recording():
     global is_recording
     if is_recording:
@@ -117,8 +125,9 @@ def save_text():
 # 建立 GUI 視窗
 root = tk.Tk()
 root.title("✨ 文字轉語音 AI 工具 ✨")
-root.geometry("800x700")
+root.geometry("1000x800")
 root.configure(bg="#dbeafe")
+root.bind("<Configure>", adjust_button_layout)
 
 style = ttk.Style()
 style.configure("TFrame", background="#dbeafe", relief="flat")
@@ -129,7 +138,7 @@ style.configure("TCombobox", font=("Arial", 14))
 frame = ttk.Frame(root, padding=30, style="TFrame")
 frame.pack(fill="both", expand=True)
 
-app_title = ttk.Label(frame, text="🎙️ 文字轉語音 AI 工具", font=("Arial", 28, "bold"))
+app_title = ttk.Label(frame, text="文字轉語音 AI 工具", font=("Arial", 22, "bold"))
 app_title.pack(pady=20)
 
 text_label = ttk.Label(frame, text="📝 輸入文字:")
@@ -147,10 +156,10 @@ language_menu.current(0)
 btn_frame = ttk.Frame(frame, padding=20, style="TFrame")
 btn_frame.pack()
 
-ttk.Button(btn_frame, text="🎧 轉換語音", command=text_to_speech).pack(side="left", padx=20, pady=10)
-ttk.Button(btn_frame, text="💾 下載音檔", command=save_audio).pack(side="left", padx=20, pady=10)
-ttk.Button(btn_frame, text="📄 下載文字檔", command=save_text).pack(side="left", padx=20, pady=10)
+buttons = [ttk.Button(btn_frame, text=label, command=cmd) for label, cmd in [("🎧 轉換語音", text_to_speech), ("💾 下載音檔", save_audio), ("📄 下載文字檔", save_text)]]
 record_button = ttk.Button(btn_frame, text="🎤 開啟錄音", command=toggle_recording)
-record_button.pack(side="left", padx=20, pady=10)
+buttons.append(record_button)
+for button in buttons:
+    button.pack()
 
 root.mainloop()
