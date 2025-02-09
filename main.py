@@ -4,7 +4,7 @@ from tkinter import filedialog, messagebox
 from gtts import gTTS
 import pygame
 import speech_recognition as sr
-
+from tkinter import ttk
 
 audio_folder = "audio"
 os.makedirs(audio_folder, exist_ok=True)
@@ -20,22 +20,6 @@ PRO_LANGUAGES = FREE_LANGUAGES + ["es", "it", "ko", "ru", "pt"]
 
 # 付費版聲音區域
 PRO_VOICES = ["com", "co.uk", "ca", "ie", "co.in", "com.au"]
-
-def recognize_speech():
-    global text_entry, language_var  # 確保函式內能存取全域變數
-    recognizer = sr.Recognizer()
-    with sr.Microphone() as source:
-        messagebox.showinfo("錄音", "請說話...")
-        try:
-            audio = recognizer.listen(source)
-            text = recognizer.recognize_google(audio, language=language_var.get())
-            text_entry.delete("1.0", tk.END)
-            text_entry.insert(tk.END, text)
-        except sr.UnknownValueError:
-            messagebox.showerror("錯誤", "無法辨識語音")
-        except sr.RequestError:
-            messagebox.showerror("錯誤", "語音辨識服務無法使用")
-
 
 def text_to_speech():
     text = text_entry.get("1.0", tk.END).strip()
@@ -84,36 +68,68 @@ def save_audio():
         except Exception as e:
             messagebox.showerror("錯誤", f"保存失敗：{str(e)}")
 
-        # 建立 GUI 視窗
-        root = tk.Tk()
-        root.title("文字轉語音小工具")
-        root.geometry("400x400")
+def recognize_speech():
+    recognizer = sr.Recognizer()
+    with sr.Microphone() as source:
+        messagebox.showinfo("錄音", "請說話...")
+        try:
+            audio = recognizer.listen(source)
+            text = recognizer.recognize_google(audio, language=language_var.get())
+            text_entry.delete("1.0", tk.END)
+            text_entry.insert(tk.END, text)
+        except sr.UnknownValueError:
+            messagebox.showerror("錯誤", "無法辨識語音")
+        except sr.RequestError:
+            messagebox.showerror("錯誤", "語音辨識服務無法使用")
 
-        # 建立輸入框
-        tk.Label(root, text="請輸入文字:").pack()
-        text_entry = tk.Text(root, height=5)
-        text_entry.pack()
-        
+# 建立 GUI 視窗
+root = tk.Tk()
+root.title("文字轉語音小工具")
+root.geometry("600x500")
+root.configure(bg="#e6f2ff")
 
-        # 設定語言選單
-        tk.Label(root, text="選擇語言:").pack()
-        language_var = tk.StringVar(value="zh-TW")
-        if VERSION == "pro":
-            language_menu = tk.OptionMenu(root, language_var, *PRO_LANGUAGES)
-        else:
-            language_menu = tk.OptionMenu(root, language_var, *FREE_LANGUAGES)
-        language_menu.pack()
-        
-        # 設定語音區域選單 (僅付費版可選)
-        if VERSION == "pro":
-            tk.Label(root, text="選擇語音區域:").pack()
-            voice_var = tk.StringVar(value="com")
-            voice_menu = tk.OptionMenu(root, voice_var, *PRO_VOICES)
-            voice_menu.pack()
-        
-        tk.Button(root, text="轉換語音", command=text_to_speech).pack()
-        tk.Button(root, text="下載音檔", command=save_audio).pack()
-        tk.Button(root, text="語音辨識 (錄音)", command=recognize_speech).pack()
+frame = ttk.Frame(root, padding=20, style="TFrame")
+frame.pack(fill="both", expand=True)
 
+style = ttk.Style()
+style.configure("TFrame", background="#e6f2ff")
+style.configure("TButton", font=("Arial", 12), padding=10)
+style.configure("TLabel", background="#e6f2ff", font=("Arial", 12))
+style.configure("TCombobox", font=("Arial", 12))
 
-        root.mainloop()
+app_title = ttk.Label(frame, text="文字轉語音小工具", font=("Arial", 18, "bold"))
+app_title.pack(pady=10)
+
+text_label = ttk.Label(frame, text="請輸入文字:")
+text_label.pack()
+text_entry = tk.Text(frame, height=5, width=60, font=("Arial", 12))
+text_entry.pack(pady=5)
+
+# 設定語言選單
+language_label = ttk.Label(frame, text="選擇語言:")
+language_label.pack()
+language_var = tk.StringVar(value="zh-TW")
+if VERSION == "pro":
+    language_menu = ttk.Combobox(frame, textvariable=language_var, values=PRO_LANGUAGES, state="readonly")
+else:
+    language_menu = ttk.Combobox(frame, textvariable=language_var, values=FREE_LANGUAGES, state="readonly")
+language_menu.pack()
+language_menu.current(0)
+
+# 設定語音區域選單 (僅付費版可選)
+if VERSION == "pro":
+    voice_label = ttk.Label(frame, text="選擇語音區域:")
+    voice_label.pack()
+    voice_var = tk.StringVar(value="com")
+    voice_menu = ttk.Combobox(frame, textvariable=voice_var, values=PRO_VOICES, state="readonly")
+    voice_menu.pack()
+    voice_menu.current(0)
+
+btn_frame = ttk.Frame(frame, padding=10)
+btn_frame.pack()
+
+ttk.Button(btn_frame, text="轉換語音", command=text_to_speech).pack(side="left", padx=10)
+ttk.Button(btn_frame, text="下載音檔", command=save_audio).pack(side="left", padx=10)
+ttk.Button(btn_frame, text="語音辨識 (錄音)", command=recognize_speech).pack(side="left", padx=10)
+
+root.mainloop()
