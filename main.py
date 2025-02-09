@@ -5,6 +5,7 @@ from gtts import gTTS
 import pygame
 import speech_recognition as sr
 from tkinter import ttk
+import threading
 
 audio_folder = "audio"
 os.makedirs(audio_folder, exist_ok=True)
@@ -20,6 +21,35 @@ PRO_LANGUAGES = FREE_LANGUAGES + ["es", "it", "ko", "ru", "pt"]
 
 # 付費版聲音區域
 PRO_VOICES = ["com", "co.uk", "ca", "ie", "co.in", "com.au"]
+
+# 錄音控制變數
+is_recording = False
+recognizer = sr.Recognizer()
+def toggle_recording():
+    global is_recording
+    if is_recording:
+        is_recording = False
+        record_button.config(text="🎤 開啟錄音")
+        messagebox.showinfo("🎤 停止錄音", "錄音已關閉。")
+    else:
+        is_recording = True
+        record_button.config(text="🛑 停止錄音")
+        messagebox.showinfo("🎤 開始錄音", "錄音已開啟，請說話...")
+        threading.Thread(target=record_speech).start()
+
+def record_speech():
+    global is_recording
+    with sr.Microphone() as source:
+        while is_recording:
+            try:
+                audio = recognizer.listen(source, timeout=5)
+                text = recognizer.recognize_google(audio, language=language_var.get())
+                text_entry.insert(tk.END, text + " ")
+            except sr.UnknownValueError:
+                pass
+            except sr.RequestError:
+                messagebox.showerror("❌ 錯誤", "語音辨識服務無法使用")
+                is_recording = False
 
 def text_to_speech():
     text = text_entry.get("1.0", tk.END).strip()
@@ -68,25 +98,39 @@ def save_audio():
         except Exception as e:
             messagebox.showerror("❌ 錯誤", f"保存失敗：{str(e)}")
 
-def recognize_speech():
-    recognizer = sr.Recognizer()
-    with sr.Microphone() as source:
-        messagebox.showinfo("🎤 錄音中", "請說話...")
+def save_text():
+    text = text_entry.get("1.0", tk.END).strip()
+    if not text:
+        messagebox.showerror("❌ 錯誤", "請輸入文字！")
+        return
+    
+    save_path = filedialog.asksaveasfilename(defaultextension=".txt", filetypes=[("Text files", "*.txt"), ("All Files", "*.*")])
+    if save_path:
         try:
-            audio = recognizer.listen(source)
-            text = recognizer.recognize_google(audio, language=language_var.get())
-            text_entry.delete("1.0", tk.END)
-            text_entry.insert(tk.END, text)
-        except sr.UnknownValueError:
-            messagebox.showerror("❌ 錯誤", "無法辨識語音")
-        except sr.RequestError:
-            messagebox.showerror("❌ 錯誤", "語音辨識服務無法使用")
+            with open(save_path, "w", encoding="utf-8") as file:
+                file.write(text)
+            messagebox.showinfo("✅ 成功", "文字檔案已保存！")
+        except Exception as e:
+            messagebox.showerror("❌ 錯誤", f"保存失敗：{str(e)}")
+
+def adjust_button_layout(event=None):
+    if root.winfo_width() < 1000:
+        btn_frame.pack_forget()
+        btn_frame.pack(fill="both", expand=True)
+        for btn in btn_frame.winfo_children():
+            btn.pack_configure(side="top", pady=5)
+    else:
+        btn_frame.pack_forget()
+        btn_frame.pack()
+        for btn in btn_frame.winfo_children():
+            btn.pack_configure(side="left", padx=20, pady=10)
 
 # 建立 GUI 視窗
 root = tk.Tk()
 root.title("✨ 文字轉語音 AI 工具 ✨")
-root.geometry("800x700")
+root.geometry("1000x800")
 root.configure(bg="#dbeafe")
+root.bind("<Configure>", adjust_button_layout)
 
 style = ttk.Style()
 style.configure("TFrame", background="#dbeafe", relief="flat")
@@ -97,7 +141,7 @@ style.configure("TCombobox", font=("Arial", 14))
 frame = ttk.Frame(root, padding=30, style="TFrame")
 frame.pack(fill="both", expand=True)
 
-app_title = ttk.Label(frame, text="🎙️ 文字轉語音 AI 工具", font=("Arial", 28, "bold"))
+app_title = ttk.Label(frame, text="文字轉語音 AI 工具", font=("Arial", 22, "bold"))
 app_title.pack(pady=20)
 
 text_label = ttk.Label(frame, text="📝 輸入文字:")
@@ -105,26 +149,14 @@ text_label.pack()
 text_entry = tk.Text(frame, height=10, width=80, font=("Arial", 14), bg="#FFFFFF", fg="#333333", borderwidth=2, relief="solid")
 text_entry.pack(pady=15)
 
-language_label = ttk.Label(frame, text="🌎 選擇語言:")
-language_label.pack()
-language_var = tk.StringVar(value="zh-TW")
-language_menu = ttk.Combobox(frame, textvariable=language_var, values=FREE_LANGUAGES if VERSION == "free" else PRO_LANGUAGES, state="readonly")
-language_menu.pack()
-language_menu.current(0)
-
-if VERSION == "pro":
-    voice_label = ttk.Label(frame, text="🔊 語音區域:")
-    voice_label.pack()
-    voice_var = tk.StringVar(value="com")
-    voice_menu = ttk.Combobox(frame, textvariable=voice_var, values=PRO_VOICES, state="readonly")
-    voice_menu.pack()
-    voice_menu.current(0)
-
 btn_frame = ttk.Frame(frame, padding=20, style="TFrame")
 btn_frame.pack()
 
-ttk.Button(btn_frame, text="🎧 轉換語音", command=text_to_speech).pack(side="left", padx=20, pady=10)
-ttk.Button(btn_frame, text="💾 下載音檔", command=save_audio).pack(side="left", padx=20, pady=10)
-ttk.Button(btn_frame, text="🎤 語音辨識", command=recognize_speech).pack(side="left", padx=20, pady=10)
+ttk.Button(btn_frame, text="🎧 轉換語音", command=text_to_speech).pack()
+ttk.Button(btn_frame, text="💾 下載音檔", command=save_audio).pack()
+ttk.Button(btn_frame, text="📄 下載文字檔", command=save_text).pack()
+record_button = ttk.Button(btn_frame, text="🎤 開啟錄音", command=toggle_recording)
+record_button.pack()
 
+adjust_button_layout()
 root.mainloop()
